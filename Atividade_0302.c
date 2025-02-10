@@ -14,6 +14,11 @@
 #define LED_G 11
 #define LED_B 12
 
+#define UART_ID uart0 // Seleciona a UART0
+#define BAUD_RATE 115200 // Define a taxa de transmissão
+#define UART_TX_PIN 0 // Pino GPIO usado para TX
+#define UART_RX_PIN 1 // Pino GPIO usado para RX
+
 // Armazena o tempo do último evento (em microssegundos)
 static volatile uint32_t last_time = 0; 
 
@@ -34,6 +39,21 @@ static void gpio_irq_handler(uint gpio, uint32_t events)
 
 
 int main() {
+  // Inicializa comunicação USB CDC para monitor serial
+  stdio_init_all(); 
+
+  // Inicializa a UART
+  uart_init(UART_ID, BAUD_RATE);
+
+  // Configura os pinos GPIO para a UART
+  gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART); // Configura o pino 0 para TX
+  gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART); // Configura o pino 1 para RX
+
+    // Mensagem inicial
+    const char *init_message = "UART Demo - RP2\r\n"
+    "Digite algo e veja o eco:\r\n";
+    uart_puts(UART_ID, init_message);
+
   //inicializacao Pinagem
   gpio_init(BUTTON_A); // Inicializa Botao A 
   gpio_set_dir(BUTTON_A, GPIO_IN); // Configura Botao como entrada
@@ -63,21 +83,22 @@ int main() {
   ssd1306_fill(&ssd, false);
   ssd1306_send_data(&ssd);
 
-  bool cor = true;
-
   // Configuração da interrupção com callback
   gpio_set_irq_enabled_with_callback(BUTTON_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
   gpio_set_irq_enabled_with_callback(BUTTON_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
-  while (true) {
-    cor = !cor;
-    // Atualiza o conteúdo do display com animações
-    ssd1306_fill(&ssd, !cor); // Limpa o display
-    ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor); // Desenha um retângulo
-    ssd1306_draw_string(&ssd, "CEPEDI   TIC37", 8, 10); // Desenha uma string
-    ssd1306_draw_string(&ssd, "EMBARCATECH", 20, 30); // Desenha uma string
-    ssd1306_draw_string(&ssd, "PROF WILTON", 15, 48); // Desenha uma string      
-    ssd1306_send_data(&ssd); // Atualiza o display
 
-    sleep_ms(1000);
+  while (true) {
+    if (uart_is_readable(UART_ID)) {
+      // Lê um caractere da UART
+      char c = uart_getc(UART_ID);
+      ssd1306_fill(&ssd, false);
+      ssd1306_draw_char(&ssd, c, 30, 30);    
+      ssd1306_send_data(&ssd); // Atualiza o display
+      
+      // Envia de volta o caractere lido (eco)
+      uart_putc(UART_ID, c);
+      // Envia uma mensagem adicional para cada caractere recebido
+      uart_puts(UART_ID, " <- Eco do RP2\r\n");
+    }
   }
 }
