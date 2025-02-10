@@ -161,7 +161,6 @@ void set_one_led(char c) {
   {
       if (buffer[i])
       {
-        uart_puts(UART_ID, "Teste\r\n");
           put_pixel(color); // Liga o LED com um no buffer
       }
       else
