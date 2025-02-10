@@ -35,13 +35,13 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(Atividade_0302 Atividade_0302.c )
+add_executable(Atividade_0302 Atividade_0302.c inc/ssd1306.c)
 
 pico_set_program_name(Atividade_0302 "Atividade_0302")
 pico_set_program_version(Atividade_0302 "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(Atividade_0302 1)
+pico_enable_stdio_uart(Atividade_0302 0)
 pico_enable_stdio_usb(Atividade_0302 1)
 
 # Add the standard library to the build
@@ -55,7 +55,7 @@ target_include_directories(Atividade_0302 PRIVATE
 
 # Add any user requested libraries
 target_link_libraries(Atividade_0302 
-        
+        hardware_i2c
         )
 
 pico_add_extra_outputs(Atividade_0302)
